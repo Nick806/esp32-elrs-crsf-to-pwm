@@ -14,10 +14,10 @@ uint64_t _last_rc_update = 0;
 // ---------------------------------- Pins Settings ----------------------------------
 // left stick pins
 const uint8_t left_stick_left = 18;
-const uint8_t left_stick_left_pwm = 19;
+// const uint8_t left_stick_left_pwm = 19;
 
 const uint8_t left_stick_right = 21;
-const uint8_t left_stick_right_pwm = 22;
+// const uint8_t left_stick_right_pwm = 22;
 
 // right stick pins
 const uint8_t right_stick_forward = 25;
@@ -31,7 +31,7 @@ const uint8_t switch_e_up = 4;
 
 // switch F pins
 const uint8_t switch_f_down = NULL;
-const uint8_t switch_f_up = 23;
+const uint8_t switch_f_up = 19;
 
 // switch B pins
 const uint8_t switch_b_forward = NULL;
@@ -45,7 +45,7 @@ const uint8_t switch_c_backward = 23;
 const uint8_t button_d = 27;
 
 // button A pin
-const uint8_t button_a = NULL;
+const uint8_t button_a = 22;
 
 // last pin on
 uint8_t last_pin_on = 0;
@@ -158,8 +158,8 @@ void setup()
   ledcSetup(right_stick_backward_channel, 5000, 8);
   ledcSetup(right_stick_forward_channel, 5000, 8);
 
-  ledcAttachPin(left_stick_left_pwm, left_stick_left_channel);
-  ledcAttachPin(left_stick_right_pwm, left_stick_right_channel);
+  // ledcAttachPin(left_stick_left_pwm, left_stick_left_channel);
+  // ledcAttachPin(left_stick_right_pwm, left_stick_right_channel);
   ledcAttachPin(right_stick_backward_pwm, right_stick_backward_channel);
   ledcAttachPin(right_stick_forward_pwm, right_stick_forward_channel);
 
@@ -254,7 +254,7 @@ void loop()
 
       // Serial.print("  Ch 4: ");
       // Serial.print(_raw_rc_values[3]);
-      handle_change_with_pwm(_raw_rc_values[3], left_stick_left, left_stick_right, left_stick_left_channel, left_stick_right_channel); // left stick left/right
+      handle_change(_raw_rc_values[3], left_stick_left, left_stick_right); // left stick left/right
 
       // Serial.print("  Ch 5: ");
       // Serial.print(_raw_rc_values[4]);
