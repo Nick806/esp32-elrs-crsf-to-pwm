@@ -4,6 +4,8 @@
 #define RXD2 16
 #define TXD2 17
 #define SBUS_BUFFER_SIZE 25
+
+const uint16_t trashhold = 30; // trashhold for sticks
 uint8_t _rcs_buf[25]{};
 uint16_t _raw_rc_values[RC_INPUT_MAX_CHANNELS]{};
 uint16_t _raw_rc_count{};
@@ -11,37 +13,48 @@ uint64_t _last_rc_update = 0;
 
 // ---------------------------------- Pins Settings ----------------------------------
 // left stick pins
-const uint8_t left_stick_up = 18;
-const uint8_t left_stick_down = 19;
+const uint8_t left_stick_left = 18;
+const uint8_t left_stick_left_pwm = 19;
+
+const uint8_t left_stick_right = 21;
+const uint8_t left_stick_right_pwm = 22;
 
 // right stick pins
-const uint8_t right_stick_left = 21;
-const uint8_t right_stick_right = 22;
+const uint8_t right_stick_forward = 25;
+const uint8_t right_stick_forward_pwm = 26;
+const uint8_t right_stick_backward = 32;
+const uint8_t right_stick_backward_pwm = 33;
 
 // switch E pins
 const uint8_t switch_e_down = NULL;
-const uint8_t switch_e_up = 25;
+const uint8_t switch_e_up = 4;
 
 // switch F pins
 const uint8_t switch_f_down = NULL;
 const uint8_t switch_f_up = 23;
 
 // switch B pins
-const uint8_t switch_b_forward = 26;
-const uint8_t switch_b_backward = 27;
+const uint8_t switch_b_forward = NULL;
+const uint8_t switch_b_backward = 13;
 
 // switch C pins
-const uint8_t switch_c_forward = 4;
-const uint8_t switch_c_backward = 32;
+const uint8_t switch_c_forward = NULL;
+const uint8_t switch_c_backward = 23;
 
 // button D pin
-const uint8_t button_d = 33;
+const uint8_t button_d = 27;
 
 // button A pin
-const uint8_t button_a = 13;
+const uint8_t button_a = NULL;
 
 // last pin on
 uint8_t last_pin_on = 0;
+
+// pwm settings
+const uint8_t left_stick_left_channel = 0;
+const uint8_t left_stick_right_channel = 1;
+const uint8_t right_stick_forward_channel = 2;
+const uint8_t right_stick_backward_channel = 3;
 
 // ---------------------------------- Functions ----------------------------------
 
@@ -52,7 +65,7 @@ void secureDigitalWrite(uint8_t pin, bool value)
     digitalWrite(pin, value);
     if (value && last_pin_on != pin)
     {
-      Serial.println("pin " + String(pin) + " set to HIGH");
+      // Serial.println("pin " + String(pin) + " set to HIGH");
       last_pin_on = pin;
     }
   }
@@ -61,18 +74,19 @@ void secureDigitalWrite(uint8_t pin, bool value)
 void disable_speed()
 {
   secureDigitalWrite(switch_e_up, LOW);
+  secureDigitalWrite(switch_e_down, LOW);
   secureDigitalWrite(switch_b_forward, LOW);
   secureDigitalWrite(switch_b_backward, LOW);
 }
 
 void handle_change(uint16_t value, uint8_t high, uint8_t low)
 {
-  if (value > 1700)
+  if (value > 1650)
   {
     secureDigitalWrite(high, HIGH);
     secureDigitalWrite(low, LOW);
   }
-  else if (value < 1300)
+  else if (value < 1350)
   {
     secureDigitalWrite(low, HIGH);
     secureDigitalWrite(high, LOW);
@@ -84,11 +98,42 @@ void handle_change(uint16_t value, uint8_t high, uint8_t low)
   }
 }
 
+bool handle_change_with_pwm(uint16_t value, uint8_t high, uint8_t low, uint8_t pwm1, uint8_t pwm2)
+{
+
+  uint16_t value_fixed = constrain(value, 1000, 2000);
+
+  bool stick_active = true;
+  if (value > 1650)
+  {
+    ledcWrite(pwm1, map(value_fixed, 1650, 2000, 0, 255));
+    secureDigitalWrite(high, HIGH);
+    secureDigitalWrite(low, LOW);
+  }
+  else if (value < 1350)
+  {
+    ledcWrite(pwm2, map(value_fixed, 1350, 1000, 0, 255));
+    secureDigitalWrite(low, HIGH);
+    secureDigitalWrite(high, LOW);
+  }
+  else
+  {
+    secureDigitalWrite(high, LOW);
+    secureDigitalWrite(low, LOW);
+    ledcWrite(pwm1, 0);
+    ledcWrite(pwm2, 0);
+
+    stick_active = false;
+  }
+
+  return stick_active;
+}
+
 void handle_acceleration(uint16_t value, uint16_t b_switch, uint16_t e_switch)
 {
-  handle_change(value, left_stick_up, left_stick_down);
+  bool stick_active = handle_change_with_pwm(value, right_stick_forward, right_stick_backward, right_stick_forward_channel, right_stick_backward_channel);
 
-  if (value > 1700 || value < 1300)
+  if (stick_active)
   {
     handle_change(b_switch, switch_b_backward, switch_b_forward);
     handle_change(e_switch, switch_e_up, switch_e_down);
@@ -107,15 +152,26 @@ void setup()
   Serial.println("Serial Txd is on pin: " + String(TX));
   Serial.println("Serial Rxd is on pin: " + String(RX));
 
-  pinMode(left_stick_up, OUTPUT);
-  digitalWrite(left_stick_up, LOW);
-  pinMode(left_stick_down, OUTPUT);
-  digitalWrite(left_stick_down, LOW);
+  // pwm settings
+  ledcSetup(left_stick_left_channel, 5000, 8);
+  ledcSetup(left_stick_right_channel, 5000, 8);
+  ledcSetup(right_stick_backward_channel, 5000, 8);
+  ledcSetup(right_stick_forward_channel, 5000, 8);
 
-  pinMode(right_stick_left, OUTPUT);
-  digitalWrite(right_stick_left, LOW);
-  pinMode(right_stick_right, OUTPUT);
-  digitalWrite(right_stick_right, LOW);
+  ledcAttachPin(left_stick_left_pwm, left_stick_left_channel);
+  ledcAttachPin(left_stick_right_pwm, left_stick_right_channel);
+  ledcAttachPin(right_stick_backward_pwm, right_stick_backward_channel);
+  ledcAttachPin(right_stick_forward_pwm, right_stick_forward_channel);
+
+  pinMode(left_stick_left, OUTPUT);
+  digitalWrite(left_stick_left, LOW);
+  pinMode(left_stick_right, OUTPUT);
+  digitalWrite(left_stick_right, LOW);
+
+  pinMode(right_stick_forward, OUTPUT);
+  digitalWrite(right_stick_forward, LOW);
+  pinMode(right_stick_backward, OUTPUT);
+  digitalWrite(right_stick_backward, LOW);
 
   pinMode(switch_e_down, OUTPUT);
   digitalWrite(switch_e_down, LOW);
@@ -150,11 +206,11 @@ void loop()
   {
     Serial.println("No RC signal detected");
 
-    secureDigitalWrite(left_stick_up, LOW);
-    secureDigitalWrite(left_stick_down, LOW);
+    secureDigitalWrite(left_stick_left, LOW);
+    secureDigitalWrite(left_stick_right, LOW);
 
-    secureDigitalWrite(right_stick_left, LOW);
-    secureDigitalWrite(right_stick_right, LOW);
+    secureDigitalWrite(right_stick_forward, LOW);
+    secureDigitalWrite(right_stick_backward, LOW);
 
     secureDigitalWrite(switch_e_down, LOW);
     secureDigitalWrite(switch_e_up, LOW);
@@ -186,19 +242,19 @@ void loop()
       }
       // Serial.print("Ch 1: ");
       // Serial.print(_raw_rc_values[0]);
-      handle_change(_raw_rc_values[0], right_stick_left, right_stick_right); // right stick left/right
+      // handle_change(_raw_rc_values[0], right_stick_left, right_stick_right); // right stick left/right (ignored)
 
       // Serial.print("  Ch 2: ");
       // Serial.print(_raw_rc_values[1]);
-      // right stick up/down (ignored)
+      handle_acceleration(_raw_rc_values[1], _raw_rc_values[5], _raw_rc_values[4]); // right stick up/down (ignored)
 
       // Serial.print("  Ch 3: ");
       // Serial.print(_raw_rc_values[2]);
-      handle_acceleration(_raw_rc_values[2], _raw_rc_values[5], _raw_rc_values[4]); // left stick up/down
+      // left stick up/down  (ignored)
 
       // Serial.print("  Ch 4: ");
       // Serial.print(_raw_rc_values[3]);
-      // left stick left/right (ignored)
+      handle_change_with_pwm(_raw_rc_values[3], left_stick_left, left_stick_right, left_stick_left_channel, left_stick_right_channel); // left stick left/right
 
       // Serial.print("  Ch 5: ");
       // Serial.print(_raw_rc_values[4]);
