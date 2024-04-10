@@ -240,46 +240,46 @@ void loop()
       {
         return;
       }
-      // Serial.print("Ch 1: ");
-      // Serial.print(_raw_rc_values[0]);
+       Serial.print("Ch_1:");
+       Serial.print(_raw_rc_values[0]);
       // handle_change(_raw_rc_values[0], right_stick_left, right_stick_right); // right stick left/right (ignored)
 
-      // Serial.print("  Ch 2: ");
-      // Serial.print(_raw_rc_values[1]);
+       Serial.print(",Ch_2:");
+       Serial.print(_raw_rc_values[1]);
       handle_acceleration(_raw_rc_values[1], _raw_rc_values[5], _raw_rc_values[4]); // right stick up/down (ignored)
 
-      // Serial.print("  Ch 3: ");
-      // Serial.print(_raw_rc_values[2]);
+       Serial.print(",Ch_3:");
+       Serial.print(_raw_rc_values[2]);
       // left stick up/down  (ignored)
 
-      // Serial.print("  Ch 4: ");
-      // Serial.print(_raw_rc_values[3]);
+       Serial.print(",Ch 4:");
+       Serial.print(_raw_rc_values[3]);
       handle_change(_raw_rc_values[3], left_stick_left, left_stick_right); // left stick left/right
 
-      // Serial.print("  Ch 5: ");
-      // Serial.print(_raw_rc_values[4]);
+       Serial.print(",Ch_5:");
+       Serial.print(_raw_rc_values[4]);
       // handle_change(_raw_rc_values[4], switch_e_up, switch_e_down); // switch E up/down
 
-      // Serial.print("  Ch 6: ");
-      // Serial.print(_raw_rc_values[5]);
+       Serial.print(",Ch_6:");
+       Serial.print(_raw_rc_values[5]);
       // handle_change(_raw_rc_values[5], switch_b_backward, switch_b_forward); // switch B forward/backward
 
-      // Serial.print("  Ch 7: ");
-      // Serial.print(_raw_rc_values[6]);
+       Serial.print(",Ch_7:");
+       Serial.print(_raw_rc_values[6]);
       handle_change(_raw_rc_values[6], switch_f_up, switch_f_down); // switch F up/down (ignored)
 
-      // Serial.print("  Ch 8: ");
-      // Serial.print(_raw_rc_values[7]);
+       Serial.print(",Ch_8:");
+       Serial.print(_raw_rc_values[7]);
       handle_change(_raw_rc_values[7], switch_c_backward, switch_c_forward); // switch C forward/backward
 
-      // Serial.print("  Ch 9: ");
-      // Serial.print(_raw_rc_values[8]);
+       Serial.print(",Ch_9:");
+       Serial.print(_raw_rc_values[8]);
       handle_change(_raw_rc_values[8], button_d, NULL); // button D
 
-      // Serial.print("  Ch 10: ");
-      // Serial.print(_raw_rc_values[9]);
+       Serial.print(",Ch_10:");
+       Serial.print(_raw_rc_values[9]);
       handle_change(_raw_rc_values[9], button_a, NULL); // button A
-      // Serial.println("");
+       Serial.print("\n");
     }
   }
 }
